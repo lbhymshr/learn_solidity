@@ -18,7 +18,7 @@ compiled_sol = compile_standard(
         "sources": {"SimpleStorage.sol": {"content": simple_storage_file}},
         "settings": {"outputSelection": {"*": {"*": ["abi", "metadata", "evm.bytecode", "evmsourceMap"]}}},
     },
-    solc_version="0.8.0",
+    solc_version="0.8.7",
 )
 
 # Writing the entire compiled code into a json output
