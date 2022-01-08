@@ -10,8 +10,7 @@ with open ("Documents/learn_solidity/web3py/SimpleStorage.sol", "r") as file:
     simple_storage_file = file.read()    
 
 #Compile our solidity
-
-#Read about py-solc-x documentation
+# TODO - Read about py-solc-x documentation
 install_solc("0.8.7")
 compiled_sol = compile_standard(
     {
@@ -32,9 +31,10 @@ bytecode = compiled_sol["contracts"]["SimpleStorage.sol"]["SimpleStorage"]["evm"
 #get abi
 abi = compiled_sol["contracts"]["SimpleStorage.sol"]["SimpleStorage"]["abi"]
 
-w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:7545"))
-chain_id = 1337 
-my_address = "0xDD091E1d4984Aa555B1621f2C3B20f06e3C47662"
+# TODO - store the below fields in the env file so that they can be changed at anytime easily
+w3 = Web3(Web3.HTTPProvider(os.getenv("RPC_SERVER")))
+chain_id = int(os.getenv("NETWORK_ID"))
+my_address = os.getenv("ADDRESS")
 private_key = os.getenv("PRIVATE_KEY")
 
 #Create the contract in python
@@ -58,7 +58,13 @@ transaction_hash = w3.eth.send_raw_transaction(signed_transaction.rawTransaction
 
 # Wait for block confirmations
 transaction_receipt = w3.eth.wait_for_transaction_receipt(transaction_hash)
+contract_receipt = {"contractAddress": transaction_receipt.contractAddress}
 
+# TODO - Write the entire transaction receipt to a file so that it can be read from a different python code
+with open("Documents/learn_solidity/web3py/contract_receipt.json", "w") as file:
+    json.dump(contract_receipt, file)
+
+'''Below code should be in another python file called contract interaction'''
 # Working with the contract
 # We need 1. Contract Address 2. Contract ABI
 simple_storage = w3.eth.contract(address=transaction_receipt.contractAddress, abi=abi)
