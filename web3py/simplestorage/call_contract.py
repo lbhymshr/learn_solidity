@@ -41,7 +41,7 @@ pretty_contractABI = json.dumps(contractABI, indent=4)
 
 print("We are now going to call the contract functions. Select N when you are done")
 user_flag = 'Y'
-while (user_flag == 'Y' || user_flag == 'y'):
+while (user_flag == 'Y' or user_flag == 'y'):
     os.system('clear')
     print("We are now going to call the contract functions. Select N when you are done")
     print(f"There are {len(contractABI)} callable functions in the contract")
