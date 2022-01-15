@@ -27,6 +27,7 @@ def deploy_contract():
         publish_source=config["networks"][network.show_active()].get("verify", False),
     )
     print(f"Lottery contract is deployed at {lottery.address}")
+    return lottery
 
 
 def start_lottery():
@@ -59,7 +60,7 @@ def end_lottery():
     fund_txn.wait(1)
     end_txn = lottery.endLottery({"from": account})
     end_txn.wait(1)
-    time.sleep(10)
+    time.sleep(60)
     print(f"{lottery.winner()} is the winner of this lottery")
 
 

@@ -74,7 +74,7 @@ def get_contract(contract_name):
     else:
         contract_address = config["networks"][network.show_active()][contract_name]
         contract = Contract.from_abi(
-            contract_type.name, contract_address, contract_type.abi
+            contract_type._name, contract_address, contract_type.abi
         )
     return contract
 

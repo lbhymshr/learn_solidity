@@ -139,15 +139,14 @@ contract Lottery is VRFConsumerBase, Ownable {
         // Reset the lottery state to closed
         lottery_state = LOTTERY_STATE.CLOSED;
 
-        // Reset the playerList array
-        playerList = new address payable[](0);
-
         // Reset the mappings
         for (uint256 i = 0; i < playerList.length; i++) {
             address playerAddress = playerList[i];
             playerToEntryAmount[playerAddress] = 0;
             players[playerAddress] = false;
         }
+        // Reset the playerList array
+        playerList = new address payable[](0);
 
         randomness = _randomness;
     }
