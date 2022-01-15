@@ -6,20 +6,28 @@ import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 contract Lottery is VRFConsumerBase, Ownable {
-    mapping(address => uint256) public playerToEntryAmount;
-    mapping(address => bool) public players;
     AggregatorV3Interface internal priceFeed;
-    uint256 public minUSD;
 
     enum LOTTERY_STATE {
         OPEN,
         CLOSED,
         CALCULATING_WINNER
     }
-
     LOTTERY_STATE public lottery_state;
-    uint256 public fee;
+
+    mapping(address => uint256) public playerToEntryAmount;
+    mapping(address => bool) public players;
+
+    address payable[] internal playerList;
+    address payable public winner;
+
     bytes32 public keyhash;
+
+    uint256 public randomness;
+    uint256 public minUSD;
+    uint256 public fee;
+
+    event RequestedRandomness(bytes32 requestId);
 
     constructor(
         address _priceFeed,
@@ -50,6 +58,7 @@ contract Lottery is VRFConsumerBase, Ownable {
                 msg.value >= getEntranceFee(),
                 "You have not submitted minimum Weis required to participate!"
             );
+            playerList.push(payable(msg.sender));
             players[msg.sender] = true;
         }
         playerToEntryAmount[msg.sender] += msg.value;
@@ -83,9 +92,6 @@ contract Lottery is VRFConsumerBase, Ownable {
         }
     }
 
-    // TODO - Remove this function
-    function getPriceData() public view returns (uint256) {}
-
     function startLottery() public onlyOwner {
         require(
             lottery_state == LOTTERY_STATE.CLOSED,
@@ -98,18 +104,51 @@ contract Lottery is VRFConsumerBase, Ownable {
         // Getting a real random number in a deterministic blockchain is truly impossible
         // Lets use the nonce, msg.sender, block difficulty & block.timestamp as seeds for random number generator
         // This is not a safe method
-        lottery_state = LOTTERY_STATE.CLOSED;
+        lottery_state = LOTTERY_STATE.CALCULATING_WINNER;
         uint256(
             keccak256(
                 abi.encodePacked(
-                    nonce, // is predictable
+                    tx.gasprice, // is predictable
                     msg.sender, // is knows
                     block.difficulty, //difficulty can be manipulated by the miners
                     block.timestamp // this is predictable
                 )
             )
-        ) % players.length;
+        ) % playerList.length;
 
         // Chainlink VRF provides provable verified random number
+        bytes32 requestId = requestRandomness(keyhash, fee);
+        emit RequestedRandomness(requestId);
+    }
+
+    // Internal function so that only VRFCoordinator is calling this function
+    function fulfillRandomness(bytes32 _requestId, uint256 _randomness)
+        internal
+        override
+    {
+        require(
+            lottery_state == LOTTERY_STATE.CALCULATING_WINNER,
+            "Not calculating winner yet!"
+        );
+        require(_randomness > 0, "Random not found");
+        uint256 indexOfWinner = _randomness % playerList.length;
+        winner = playerList[indexOfWinner];
+
+        payable(winner).transfer(address(this).balance);
+
+        // Reset the lottery state to closed
+        lottery_state = LOTTERY_STATE.CLOSED;
+
+        // Reset the playerList array
+        playerList = new address payable[](0);
+
+        // Reset the mappings
+        for (uint256 i = 0; i < playerList.length; i++) {
+            address playerAddress = playerList[i];
+            playerToEntryAmount[playerAddress] = 0;
+            players[playerAddress] = false;
+        }
+
+        randomness = _randomness;
     }
 }
