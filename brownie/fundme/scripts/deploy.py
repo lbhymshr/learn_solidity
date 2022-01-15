@@ -18,7 +18,7 @@ def deploy_contract():
     fundme = FundMe.deploy(
         eth_usd,
         {"from": account},
-        publish_source=config["networks"][network.show_active()].get("verify"),
+        publish_source=config["networks"][network.show_active()].get("verify", False),
     )
     print(f"The contract is deployed at {fundme.address}")
 
